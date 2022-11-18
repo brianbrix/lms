@@ -5,9 +5,14 @@ import com.company.lms.db.repos.LoanRequestRepository;
 import com.company.lms.exceptions.GenericException;
 import com.company.lms.model.req.LoanRequest;
 import com.company.lms.model.res.GenericResponse;
+import com.company.lms.model.res.ScoreInitResponse;
+import com.company.lms.model.res.ScoreResponse;
 import com.company.lms.services.LoanService;
+import com.company.lms.utilis.AppConstants;
+import com.company.lms.utilis.GenericWebclient;
 import com.google.gson.Gson;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -36,5 +41,18 @@ public class LoanServiceImpl implements LoanService {
         return loanRequestRepository.findById(loanId)
                 .flatMap(res -> Mono.just(new GenericResponse<>("SUCCESS", "", res)))
                 .switchIfEmpty(Mono.defer(()-> Mono.just(new GenericResponse<>("FAILED", "SUCCESS",null))));
+    }
+    @SneakyThrows
+    @Override
+    public Mono<ScoreInitResponse> initScoreRequest(String customerNumber)
+    {
+        return GenericWebclient.getForSingleObjResponse(String.format(AppConstants.SCORE_INIT_URL, customerNumber), ScoreInitResponse.class);
+    }
+    @SneakyThrows
+    @Override
+    public Mono<ScoreResponse> getScore(String token)
+    {
+        return GenericWebclient.getForSingleObjResponseWithExponentialRetries(String.format(AppConstants.SCORE_URL, token), ScoreResponse.class);
+
     }
 }

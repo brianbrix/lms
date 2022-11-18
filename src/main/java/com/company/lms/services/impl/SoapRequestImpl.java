@@ -6,9 +6,14 @@ import com.company.lms.exceptions.GenericException;
 import com.company.lms.model.res.GenericResponse;
 import com.company.lms.model.soap.Customer;
 import com.company.lms.model.soap.Transactions;
+import com.company.lms.model.soap.TransactionsMod;
 import com.company.lms.model.soap.TransactionsResponse;
 import com.company.lms.services.SoapRequestService;
 import com.company.lms.utilis.AppConstants;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.google.gson.Gson;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -20,7 +25,9 @@ import org.xml.sax.InputSource;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.Sinks;
 import reactor.core.scheduler.Schedulers;
+import reactor.util.concurrent.Queues;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
@@ -36,6 +43,7 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Slf4j
@@ -157,16 +165,36 @@ public class SoapRequestImpl implements SoapRequestService {
     }
 
     @Override
-    public Flux<Transactions> fetchTransactionsHistory(String customerNumber) {
+    @SneakyThrows
+    public Flux<TransactionsMod> fetchTransactionsHistory(String customerNumber) {
+        ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        ObjectWriter writer   = objectMapper.writer().withoutAttribute("createdAt").withoutAttribute("createdDate").withoutAttribute("lastTransactionDate").withoutAttribute("updatedAt");
         String data = String.format(AppConstants.TRANSACTIONS_REQ,soapUsername, soapPassword,customerNumber);
-            return makeRequest(data, AppConstants.TRANSACTIONS_URL)
+        Sinks.Many<TransactionsMod> transactionsModMany= Sinks.many().multicast().onBackpressureBuffer(Queues.SMALL_BUFFER_SIZE,false);
+             makeRequest(data, AppConstants.TRANSACTIONS_URL)
                     .log()
                         .map(result->
                         {
                             log.info("RES: {}",result);
                             return getJavaObjectFromSoapXml(result,TransactionsResponse.class);
-                        }).map(TransactionsResponse::getTransactions).flatMapMany(Flux::fromIterable)
-                        .subscribeOn(Schedulers.boundedElastic())
+                        }).subscribeOn(Schedulers.boundedElastic())
+                    .subscribe(transactionsResponse -> Flux.fromIterable(transactionsResponse.getTransactions()).subscribe(transaction -> {
+                        try {
+
+                            String transactionString = writer.writeValueAsString(transaction);
+                            var finalRes = objectMapper.readValue(transactionString, TransactionsMod.class);
+                            finalRes.setUpdatedAt(transaction.getUpdatedAt().getTime());
+                            finalRes.setCreatedAt(transaction.getCreatedAt().getTime());
+                            finalRes.setLastTransactionDate(transaction.getLastTransactionDate().getTime());
+                            finalRes.setCreatedDate(transaction.getCreatedDate().getTime());
+                            transactionsModMany.emitNext(finalRes, Sinks.EmitFailureHandler.FAIL_FAST);
+
+                        } catch (JsonProcessingException e) {
+                            throw new RuntimeException(e);
+                        }
+
+                    } ));
+             return transactionsModMany.asFlux()
                         .onErrorResume(error->{
                             log.info("We were unable to find KYC for this customer");
                             throw new GenericException("We were not able to find this customer details.");

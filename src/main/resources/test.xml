@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+<soap:Body>
+    <CustomerRequest xmlns="http://credable.io/cbs/customer">
+        <customerNumber>234774784</customerNumber>
+    </CustomerRequest>
+</soap:Body>
+</soap:Envelope>

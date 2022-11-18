@@ -1,0 +1,50 @@
+version: '2'
+
+services:
+  app:
+    image: 'lms:latest'
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: app
+    depends_on:
+      - db
+    expose:
+      - 8080
+#    ports:
+#      - "8080:8080"
+    environment:
+      - SPRING_DATA_MONGODB_DATABASE=defaultdb
+      - SPRING_DATA_MONGODB_HOST=db
+      - SPRING_DATA_MONGODB_USERNAME=root
+      - SPRING_DATA_MONGODB_PASSWORD=root
+      - SPRING_DATA_MONGODB_PORT=27017
+
+#    volumes:
+#      - ~/Documents:/user/local/Documents
+    network_mode: host
+  db:
+    build:
+      context: .
+    image: mongo:4.4
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+      MONGO_INITDB_DATABASE: defaultdb
+    network_mode: host
+#    networks:
+#      - main-network
+#    command: ["--bind-ip","0.0.0.0"]
+
+#  mongo-express:
+#    image: mongo-express
+#    restart: always
+#    ports:
+#      - 27017:27017
+#    environment:
+#      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+#      ME_CONFIG_MONGODB_ADMINPASSWORD: root
+#      ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/

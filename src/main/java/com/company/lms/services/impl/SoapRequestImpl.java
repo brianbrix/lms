@@ -44,7 +44,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Service
@@ -164,41 +166,21 @@ public class SoapRequestImpl implements SoapRequestService {
                 })).map(s-> new GenericResponse<>("STATUS", s));
     }
 
-    @Override
-    @SneakyThrows
-    public Flux<TransactionsMod> fetchTransactionsHistory(String customerNumber) {
-        ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        ObjectWriter writer   = objectMapper.writer().withoutAttribute("createdAt").withoutAttribute("createdDate").withoutAttribute("lastTransactionDate").withoutAttribute("updatedAt");
-        String data = String.format(AppConstants.TRANSACTIONS_REQ,soapUsername, soapPassword,customerNumber);
-        Sinks.Many<TransactionsMod> transactionsModMany= Sinks.many().multicast().onBackpressureBuffer(Queues.SMALL_BUFFER_SIZE,false);
-             makeRequest(data, AppConstants.TRANSACTIONS_URL)
-                    .log()
-                        .map(result->
-                        {
-                            log.info("RES: {}",result);
-                            return getJavaObjectFromSoapXml(result,TransactionsResponse.class);
-                        })
-                    .map(transactionsResponse -> Flux.fromIterable(transactionsResponse.getTransactions()).map(transaction -> {
-                        try {
-                            log.info("TRANS: {}", transaction);
-                            String transactionString = writer.writeValueAsString(transaction);
-                            var finalRes = objectMapper.readValue(transactionString, TransactionsMod.class);
-                            finalRes.setUpdatedAt(transaction.getUpdatedAt().getTime());
-                            finalRes.setCreatedAt(transaction.getCreatedAt().getTime());
-                            finalRes.setLastTransactionDate(transaction.getLastTransactionDate().getTime());
-                            finalRes.setCreatedDate(transaction.getCreatedDate().getTime());
-                            transactionsModMany.emitNext(finalRes, Sinks.EmitFailureHandler.FAIL_FAST);
-                            log.info("TRANSMOD: {}", finalRes);
-                        } catch (JsonProcessingException e) {
-                            throw new RuntimeException(e);
-                        }
-                        return Flux.empty();
 
-                    } ));
-             return transactionsModMany.asFlux()
-                        .onErrorResume(error->{
-                            log.info("We were unable to find KYC for this customer");
-                            throw new GenericException("We were not able to find this customer details.");
-                        });
+    @Override
+    public Flux<Transactions> fetchTransactionsHistory(String customerNumber) {
+        String data = String.format(AppConstants.TRANSACTIONS_REQ,soapUsername, soapPassword,customerNumber);
+        return makeRequest(data, AppConstants.TRANSACTIONS_URL)
+                .log()
+                .map(result->
+                {
+                    log.info("RES: {}",result);
+                    return getJavaObjectFromSoapXml(result,TransactionsResponse.class);
+                }).map(TransactionsResponse::getTransactions).flatMapMany(Flux::fromIterable)
+                .subscribeOn(Schedulers.boundedElastic())
+                .onErrorResume(error->{
+                    log.info("We were unable to find KYC for this customer");
+                    throw new GenericException("We were not able to find this customer details.");
+                });
     }
 }

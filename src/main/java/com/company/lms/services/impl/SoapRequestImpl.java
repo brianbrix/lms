@@ -177,10 +177,10 @@ public class SoapRequestImpl implements SoapRequestService {
                         {
                             log.info("RES: {}",result);
                             return getJavaObjectFromSoapXml(result,TransactionsResponse.class);
-                        }).subscribeOn(Schedulers.boundedElastic())
-                    .subscribe(transactionsResponse -> Flux.fromIterable(transactionsResponse.getTransactions()).subscribe(transaction -> {
+                        })
+                    .map(transactionsResponse -> Flux.fromIterable(transactionsResponse.getTransactions()).map(transaction -> {
                         try {
-
+                            log.info("TRANS: {}", transaction);
                             String transactionString = writer.writeValueAsString(transaction);
                             var finalRes = objectMapper.readValue(transactionString, TransactionsMod.class);
                             finalRes.setUpdatedAt(transaction.getUpdatedAt().getTime());
@@ -188,10 +188,11 @@ public class SoapRequestImpl implements SoapRequestService {
                             finalRes.setLastTransactionDate(transaction.getLastTransactionDate().getTime());
                             finalRes.setCreatedDate(transaction.getCreatedDate().getTime());
                             transactionsModMany.emitNext(finalRes, Sinks.EmitFailureHandler.FAIL_FAST);
-
+                            log.info("TRANSMOD: {}", finalRes);
                         } catch (JsonProcessingException e) {
                             throw new RuntimeException(e);
                         }
+                        return Flux.empty();
 
                     } ));
              return transactionsModMany.asFlux()

@@ -24,6 +24,7 @@ public class LoanScheduler {
             .publishOn(Schedulers.boundedElastic())
             .subscribe(loanRequestEntity -> {
                 loanRequestEntity.setStatus("PENDING");
+                loanRequestRepository.save(loanRequestEntity).subscribe(saved->log.info("SAVED: {}", saved));
                  loanService.initScoreRequest(loanRequestEntity.getCustomerNumber())
                                 .subscribeOn(Schedulers.boundedElastic())
                                 .subscribe(res->loanService.getScore(res.getToken()).subscribe(res2->

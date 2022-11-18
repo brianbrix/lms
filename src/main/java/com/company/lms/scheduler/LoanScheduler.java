@@ -17,7 +17,7 @@ import reactor.core.scheduler.Schedulers;
 public class LoanScheduler {
     private final LoanService loanService;
     private final LoanRequestRepository loanRequestRepository;
-    @Scheduled()
+    @Scheduled(fixedDelay = 1000)
     public void processLoan()
     {
     loanRequestRepository.findAllByStatus("NEW")

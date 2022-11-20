@@ -11,6 +11,7 @@ import com.company.lms.model.soap.TransactionsResponse;
 import com.company.lms.services.SoapRequestService;
 import com.company.lms.utilis.AppConstants;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -168,7 +169,7 @@ public class SoapRequestImpl implements SoapRequestService {
 
 
     @Override
-    public Flux<Transactions> fetchTransactionsHistory(String customerNumber) {
+    public Flux<TransactionsMod> fetchTransactionsHistory(String customerNumber) {
         String data = String.format(AppConstants.TRANSACTIONS_REQ,soapUsername, soapPassword,customerNumber);
         return makeRequest(data, AppConstants.TRANSACTIONS_URL)
                 .log()
@@ -176,11 +177,41 @@ public class SoapRequestImpl implements SoapRequestService {
                 {
                     log.info("RES: {}",result);
                     return getJavaObjectFromSoapXml(result,TransactionsResponse.class);
-                }).map(TransactionsResponse::getTransactions).flatMapMany(Flux::fromIterable)
+                }).map(tr->convert(tr.getTransactions())).flatMapMany(Flux::fromIterable)
                 .subscribeOn(Schedulers.boundedElastic())
                 .onErrorResume(error->{
                     log.info("We were unable to find KYC for this customer");
                     throw new GenericException("We were not able to find this customer details.");
                 });
+    }
+    @SneakyThrows
+    private List<TransactionsMod> convert(List<Transactions> transactions)
+    {
+        List<TransactionsMod> transactionsMods = new LinkedList<>();
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        ObjectWriter objectWriter = objectMapper.writer().withoutAttribute("createdAt").withoutAttribute("createdDate").withoutAttribute("updatedAt").withoutAttribute("lastTransactionDate");
+
+        transactions.forEach(transaction->
+        {
+            String s;
+            try {
+                log.info("Raw: {}",transaction);
+                s = objectWriter.writeValueAsString(transactions);
+                TransactionsMod res = objectMapper.readValue(s, TransactionsMod.class);
+                res.setCreatedAt(transaction.getCreatedAt().getTime());
+                res.setCreatedDate(transaction.getCreatedDate().getTime());
+                res.setLastTransactionDate(transaction.getLastTransactionDate().getTime());
+                res.setUpdatedAt(transaction.getUpdatedAt().getTime());
+                log.info("Converted: {}",res);
+                transactionsMods.add(res);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+
+
+        });
+        return transactionsMods;
+
     }
 }

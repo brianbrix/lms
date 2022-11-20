@@ -197,6 +197,7 @@ public class SoapRequestImpl implements SoapRequestService {
         {
             String s;
             try {
+
                 log.info("Raw: {}",transaction);
                 s = objectWriter.writeValueAsString(transaction);
                 TransactionsMod res = objectMapper.readValue(s, TransactionsMod.class);

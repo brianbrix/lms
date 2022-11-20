@@ -9,6 +9,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
@@ -34,7 +35,14 @@ public class LoanScheduler {
                                             .subscribeOn(Schedulers.boundedElastic())
                                             .subscribe(initResponse->{
                                                 log.info("Init Response: {}", initResponse);
-                                                loanService.getScore(initResponse.getToken(), clientResponse.getToken()).subscribe(scoreResponse->
+                                                loanService.getScore(initResponse.getToken(), clientResponse.getToken())
+                                                        .onErrorResume(error->{
+                                                            log.info("Error: {}", error.getMessage());
+                                                            loanRequestEntity.setStatus("FAILED");
+                                                            loanRequestRepository.save(loanRequestEntity).subscribe(res->log.info("SAVED :{}",res));
+                                                            return Mono.empty();
+                                                        })
+                                                        .subscribe(scoreResponse->
                                                 {
                                                     log.info("Score Response: {}", scoreResponse);
                                                     if (scoreResponse.getLimitAmount()<=loanRequestEntity.getAmount())

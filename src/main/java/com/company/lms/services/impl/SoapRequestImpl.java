@@ -177,6 +177,7 @@ public class SoapRequestImpl implements SoapRequestService {
                 {
                     log.info("RES: {}",result);
                     return getJavaObjectFromSoapXml(result,TransactionsResponse.class);
+//                }).map(TransactionsResponse::getTransactions).flatMapMany(Flux::fromIterable)
                 }).map(tr->convert(tr.getTransactions())).flatMapMany(Flux::fromIterable)
                 .subscribeOn(Schedulers.boundedElastic())
                 .onErrorResume(error->{
@@ -192,14 +193,14 @@ public class SoapRequestImpl implements SoapRequestService {
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         ObjectWriter objectWriter = objectMapper.writer().withoutAttribute("createdAt").withoutAttribute("createdDate").withoutAttribute("updatedAt").withoutAttribute("lastTransactionDate");
 
-        transactions.forEach(transaction->
+        transactions.parallelStream().forEach(transaction->
         {
             String s;
             try {
                 log.info("Raw: {}",transaction);
                 s = objectWriter.writeValueAsString(transaction);
                 TransactionsMod res = objectMapper.readValue(s, TransactionsMod.class);
-                res.setCreatedAt(transaction.getCreatedAt().getTime());
+//                res.setCreatedAt(transaction.getCreatedAt().getTime());
                 res.setCreatedDate(transaction.getCreatedDate().getTime());
                 res.setLastTransactionDate(transaction.getLastTransactionDate().getTime());
                 res.setUpdatedAt(transaction.getUpdatedAt().getTime());

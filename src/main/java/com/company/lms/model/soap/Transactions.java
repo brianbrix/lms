@@ -1,6 +1,9 @@
 package com.company.lms.model.soap;
 
+import com.company.lms.utilis.DateAdapter;
+
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.Date;
 
 public class Transactions {
@@ -278,7 +281,8 @@ public class Transactions {
     public int getChequeDebitTransactionsNumber() {
         return chequeDebitTransactionsNumber;
     }
-    @XmlElement(name = "ns2:createdAt")
+    @XmlElement(name = "ns2:createdAt", namespace = "http://credable.io/cbs/transaction")
+//    @XmlJavaTypeAdapter(DateAdapter.class)
     public Date getCreatedAt() {
         return createdAt;
     }

@@ -8,6 +8,7 @@ import com.company.lms.model.res.GenericResponse;
 import com.company.lms.services.LoanService;
 import com.company.lms.services.SoapRequestService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -15,6 +16,7 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
+@Log4j2
 @Component
 @RequiredArgsConstructor
 public class MainHandler {
@@ -30,10 +32,17 @@ public class MainHandler {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .body(Mono.just(new GenericResponse<>("SUCCESS","The customer is already subscribed",res)), GenericException.class)
                 ).switchIfEmpty(soapRequestService.fetchKYC(subscription.getCustomerNumber())
-                        .onErrorMap(error->new GenericException("Customer Number not found."))
                         .flatMap(res -> ServerResponse.status(HttpStatus.OK)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .body(BodyInserters.fromValue(res)))));
+                        .body(BodyInserters.fromValue(res))))
+                .onErrorResume(error->
+                {
+                    log.info("ERROR: {}",error.getMessage());
+                    return ServerResponse.status(HttpStatus.BAD_REQUEST)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .body(BodyInserters.fromValue(new GenericResponse<>("FAILED", "Customer number not found", null)));
+                })
+        );
     }
     public Mono<ServerResponse> testHandler(ServerRequest serverRequest)
     {

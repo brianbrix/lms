@@ -11,3 +11,8 @@ The loan status can be checked and it occurs in 3:
 - FAILED -> An error occurred during processing
 - REJECTED -> Customer is not eligible for loan maybe because of amount limit or score
 - APPROVED -> Customer is eligible for the loan requested.
+
+## The endpoints can be tested via Swagger-UI:
+https://lms-java-app.herokuapp.com/swagger-doc/webjars/swagger-ui/index.html
+## Open-API jSON description:
+https://lms-java-app.herokuapp.com/swagger-doc/v3/api-docs

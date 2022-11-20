@@ -43,10 +43,7 @@ import javax.xml.transform.stream.StreamResult;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
@@ -147,6 +144,7 @@ public class SoapRequestImpl implements SoapRequestService {
                         .map(result->
                         {
                             log.info("RES: {}",result);
+
                             return getJavaObjectFromSoapXml(result,Customer.class);
                         })
                         .subscribeOn(Schedulers.boundedElastic())

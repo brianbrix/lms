@@ -139,6 +139,10 @@ public class SoapRequestImpl implements SoapRequestService {
             log.info("FOUND IN DB");
                    return new Gson().fromJson(new Gson().toJson(customerKYC), Customer.class);
                 })
+                .onErrorResume(error->{
+                    log.info("We were unable to find KYC for this customer");
+                    throw new GenericException("We were not able to find this customer details.");
+                })
                 .switchIfEmpty( makeRequest(data, AppConstants.KYC_URL)
                         .map(result->
                         {
@@ -148,23 +152,14 @@ public class SoapRequestImpl implements SoapRequestService {
                         .subscribeOn(Schedulers.boundedElastic())
                         .map(result->
                         {
-                            try {
                                 log.info("SAVING TO DB");
                                 var s =kycRepository.save(new Gson().fromJson(new Gson().toJson(result), CustomerKYC.class));
+                                s.subscribe(saved->log.info("SAVED: {}",saved));
 
-                                log.info(s.toString());
-                            }catch (Exception e)
-                            {
-                                e.printStackTrace();
-//                                throw Exceptions.propagate(e);
-                            }
 
                             return result;
                         })
-                .onErrorResume(error->{
-                    log.info("We were unable to find KYC for this customer");
-                    throw new GenericException("We were not able to find this customer details.");
-                })).map(s-> new GenericResponse<>("STATUS", s));
+                ).map(s-> new GenericResponse<>("STATUS", s));
     }
 
 
@@ -177,7 +172,6 @@ public class SoapRequestImpl implements SoapRequestService {
                 {
                     log.info("RES: {}",result);
                     return getJavaObjectFromSoapXml(result,TransactionsResponse.class);
-//                }).map(TransactionsResponse::getTransactions).flatMapMany(Flux::fromIterable)
                 }).map(tr->convert(tr.getTransactions())).flatMapMany(Flux::fromIterable)
                 .subscribeOn(Schedulers.boundedElastic())
                 .onErrorResume(error->{

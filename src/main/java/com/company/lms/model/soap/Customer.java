@@ -2,14 +2,13 @@ package com.company.lms.model.soap;
 
 
 import javax.xml.bind.annotation.*;
-import java.util.Date;
 
 @XmlRootElement(name = "ns2:customer")
 public class Customer {
 
     public Customer(){}
-    private Date createdAt;
-    private Date createdDate;
+    private String createdAt;
+    private String createdDate;
     private String customerNumber;
     private String email;
     private String firstName;
@@ -22,9 +21,9 @@ public class Customer {
     private String mobile;
     private Double monthlyIncome;
     private String status;
-    private Date updatedAt;
+    private String updatedAt;
 
-    public Customer(Date createdAt, Date createdDate, String customerNumber, String email, String firstName, String gender, int id, Long idNumber, String idType, String lastName, String middleName, String mobile, Double monthlyIncome, String status, Date updatedAt) {
+    public Customer(String createdAt, String createdDate, String customerNumber, String email, String firstName, String gender, int id, Long idNumber, String idType, String lastName, String middleName, String mobile, Double monthlyIncome, String status, String updatedAt) {
         this.createdAt = createdAt;
         this.createdDate = createdDate;
         this.customerNumber = customerNumber;
@@ -43,11 +42,11 @@ public class Customer {
     }
 
     @XmlElement(name = "ns2:createdAt")
-    public Date getCreatedAt() {
+    public String getCreatedAt() {
         return createdAt;
     }
     @XmlElement(name = "ns2:createdDate")
-    public Date getCreatedDate() {
+    public String getCreatedDate() {
         return createdDate;
     }
     @XmlElement(name = "ns2:customerNumber")
@@ -99,15 +98,15 @@ public class Customer {
         return status;
     }
     @XmlElement(name = "ns2:updatedAt")
-    public Date getUpdatedAt() {
+    public String getUpdatedAt() {
         return updatedAt;
     }
 
-    public void setCreatedAt(Date createdAt) {
+    public void setCreatedAt(String createdAt) {
         this.createdAt = createdAt;
     }
 
-    public void setCreatedDate(Date createdDate) {
+    public void setCreatedDate(String createdDate) {
         this.createdDate = createdDate;
     }
 
@@ -159,7 +158,7 @@ public class Customer {
         this.status = status;
     }
 
-    public void setUpdatedAt(Date updatedAt) {
+    public void setUpdatedAt(String updatedAt) {
         this.updatedAt = updatedAt;
     }
 

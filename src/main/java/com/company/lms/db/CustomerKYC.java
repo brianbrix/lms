@@ -22,8 +22,8 @@ public class CustomerKYC {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long recordId;
-    private Date createdAt;
-    private Date createdDate;
+    private String createdAt;
+    private String createdDate;
     private String customerNumber;
     private String email;
     private String firstName;
@@ -36,5 +36,5 @@ public class CustomerKYC {
     private String mobile;
     private Double monthlyIncome;
     private String status;
-    private Date updatedAt;
+    private String updatedAt;
 }

@@ -5,7 +5,6 @@ import com.company.lms.exceptions.GenericException;
 import com.company.lms.model.req.LoanRequest;
 import com.company.lms.model.req.Subscription;
 import com.company.lms.model.res.GenericResponse;
-import com.company.lms.model.soap.Customer;
 import com.company.lms.services.LoanService;
 import com.company.lms.services.SoapRequestService;
 import lombok.RequiredArgsConstructor;
@@ -27,9 +26,9 @@ public class MainHandler {
         Mono<Subscription> subscriptionMono = serverRequest.bodyToMono(Subscription.class);
         return subscriptionMono.flatMap(subscription -> kycRepository.findByCustomerNumber(subscription.getCustomerNumber())
                 .flatMap(res ->
-                        ServerResponse.status(HttpStatus.BAD_REQUEST)
+                        ServerResponse.status(HttpStatus.OK)
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .body(new GenericException("The customer is already subscribed."), GenericException.class)
+                                .body(Mono.just(new GenericResponse<>("SUCCESS","The customer is already subscribed",res)), GenericException.class)
                 ).switchIfEmpty(soapRequestService.fetchKYC(subscription.getCustomerNumber())
                         .onErrorMap(error->new GenericException("Customer Number not found."))
                         .flatMap(res -> ServerResponse.status(HttpStatus.OK)

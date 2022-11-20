@@ -278,7 +278,7 @@ public class Transactions {
     public int getChequeDebitTransactionsNumber() {
         return chequeDebitTransactionsNumber;
     }
-    @XmlElement(name = "ns2:createdAt", namespace = "http://credable.io/cbs/transaction")
+    @XmlElement(name = "ns2:createdAt")
 //    @XmlJavaTypeAdapter(DateAdapter.class)
     public Date getCreatedAt() {
         return createdAt;

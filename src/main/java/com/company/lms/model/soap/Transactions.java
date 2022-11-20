@@ -1,9 +1,6 @@
 package com.company.lms.model.soap;
 
-import com.company.lms.utilis.DateAdapter;
-
 import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.Date;
 
 public class Transactions {

@@ -197,7 +197,7 @@ public class SoapRequestImpl implements SoapRequestService {
             String s;
             try {
                 log.info("Raw: {}",transaction);
-                s = objectWriter.writeValueAsString(transactions);
+                s = objectWriter.writeValueAsString(transaction);
                 TransactionsMod res = objectMapper.readValue(s, TransactionsMod.class);
                 res.setCreatedAt(transaction.getCreatedAt().getTime());
                 res.setCreatedDate(transaction.getCreatedDate().getTime());

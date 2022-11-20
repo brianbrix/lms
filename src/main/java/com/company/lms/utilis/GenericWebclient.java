@@ -101,7 +101,7 @@ public class GenericWebclient {
                 .onStatus(HttpStatus::is4xxClientError, error->Mono.error(new RuntimeException("Bad Request Error.")))
                 .bodyToMono(responseClass)
                 .retryWhen(Retry
-                        .backoff(3, Duration.ofMillis(100)).jitter(0d)
+                        .backoff(3, Duration.ofMillis(5000)).jitter(0d)
                         .doAfterRetry(rs -> log.info("Retried at " + LocalTime.now() + ", attempt " + rs.totalRetries()))
                         .onRetryExhaustedThrow((spec, rs) -> rs.failure())
                 );

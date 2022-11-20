@@ -3,7 +3,9 @@ package com.company.lms.services.impl;
 import com.company.lms.db.LoanRequestEntity;
 import com.company.lms.db.repos.LoanRequestRepository;
 import com.company.lms.exceptions.GenericException;
+import com.company.lms.model.req.ClientRequest;
 import com.company.lms.model.req.LoanRequest;
+import com.company.lms.model.res.ClientResponse;
 import com.company.lms.model.res.GenericResponse;
 import com.company.lms.model.res.ScoreInitResponse;
 import com.company.lms.model.res.ScoreResponse;
@@ -44,15 +46,25 @@ public class LoanServiceImpl implements LoanService {
     }
     @SneakyThrows
     @Override
-    public Mono<ScoreInitResponse> initScoreRequest(String customerNumber)
+    public Mono<ScoreInitResponse> initScoreRequest(String customerNumber, String headerToken)
     {
-        return GenericWebclient.getForSingleObjResponse(String.format(AppConstants.SCORE_INIT_URL, customerNumber), ScoreInitResponse.class);
+        return GenericWebclient.getForSingleObjResponse(String.format(AppConstants.SCORE_INIT_URL, customerNumber), String.class, headerToken)
+                .map(res->ScoreInitResponse.builder().token(res).build());
     }
     @SneakyThrows
     @Override
-    public Mono<ScoreResponse> getScore(String token)
+    public Mono<ScoreResponse> getScore(String token, String headerToken)
     {
-        return GenericWebclient.getForSingleObjResponseWithExponentialRetries(String.format(AppConstants.SCORE_URL, token), ScoreResponse.class);
+        return GenericWebclient.getForSingleObjResponseWithExponentialRetries(String.format(AppConstants.SCORE_URL, token), ScoreResponse.class, headerToken);
 
     }
+
+    @Override
+    @SneakyThrows
+    public Mono<ClientResponse> registerClient(ClientRequest clientRequest, String customerNumber) {
+        return GenericWebclient.postForSingleObjResponse(AppConstants.CLIENT_URL,clientRequest, ClientRequest.class, ClientResponse.class);
+    }
+
+
+
 }

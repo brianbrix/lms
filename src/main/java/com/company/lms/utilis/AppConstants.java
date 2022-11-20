@@ -33,6 +33,9 @@ public class AppConstants {
              "      </tran:TransactionsRequest>\n" +
              "   </soapenv:Body>\n" +
              "</soapenv:Envelope>";
-     public final static String SCORE_INIT_URL="https://scoringtest.credable.io/ap1/vi/scoring/initiateQueryScore/%s";
-     public final static String SCORE_URL="https://scoringtest.credable.io/ap1/vi/scoring/queryScore/%s";
+     public final static String SCORE_INIT_URL="https://scoringtest.credable.io/api/v1/scoring/initiateQueryScore/%s";
+     public final static String SCORE_URL="https://scoringtest.credable.io/api/v1/scoring/queryScore/%s";
+     public final static  String CLIENT_URL ="https://scoringtest.credable.io/api/v1/client/createClient";
+     public final static  String LMS_TRANSACTIONS_URL ="https://lms-java-app.herokuapp.com/transactions/%s";
+
 }

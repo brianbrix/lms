@@ -1,7 +1,9 @@
 package com.company.lms.scheduler;
 
 import com.company.lms.db.repos.LoanRequestRepository;
+import com.company.lms.model.req.ClientRequest;
 import com.company.lms.services.LoanService;
+import com.company.lms.utilis.AppConstants;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -25,22 +27,31 @@ public class LoanScheduler {
             .subscribe(loanRequestEntity -> {
                 loanRequestEntity.setStatus("PENDING");
                 loanRequestRepository.save(loanRequestEntity).subscribe(saved->log.info("SAVED: {}", saved));
-                 loanService.initScoreRequest(loanRequestEntity.getCustomerNumber())
-                                .subscribeOn(Schedulers.boundedElastic())
-                                .subscribe(res->loanService.getScore(res.getToken()).subscribe(res2->
-                                {
-                                    if (res2.getLimitAmount()<=loanRequestEntity.getAmount())
-                                    {
-                                        log.info("AMOUNT IS OKAY: {}",res2.getLimitAmount());
-                                        loanRequestEntity.setStatus("APPROVED");
-                                    }
-                                    else
-                                    {
-                                        log.info("AMOUNT IS NOT OKAY: {}",res2.getLimitAmount());
+                loanService.registerClient(ClientRequest.builder().url(String.format(AppConstants.LMS_TRANSACTIONS_URL,loanRequestEntity.getCustomerNumber())).name("lms-app").username("lms_user").password("lms_pass").build(), loanRequestEntity.getCustomerNumber())
+                                .subscribe(clientResponse ->{
+                                    log.info("Client Response: {}", clientResponse);
+                                    loanService.initScoreRequest(loanRequestEntity.getCustomerNumber(), clientResponse.getToken())
+                                            .subscribeOn(Schedulers.boundedElastic())
+                                            .subscribe(initResponse->{
+                                                log.info("Init Response: {}", initResponse);
+                                                loanService.getScore(initResponse.getToken(), clientResponse.getToken()).subscribe(scoreResponse->
+                                                {
+                                                    log.info("Score Response: {}", scoreResponse);
+                                                    if (scoreResponse.getLimitAmount()<=loanRequestEntity.getAmount())
+                                                    {
+                                                        log.info("AMOUNT IS OKAY: {}",scoreResponse.getLimitAmount());
+                                                        loanRequestEntity.setStatus("APPROVED");
+                                                    }
+                                                    else
+                                                    {
+                                                        log.info("AMOUNT IS NOT OKAY: {}",scoreResponse.getLimitAmount());
 
-                                        loanRequestEntity.setStatus("REJECTED");
-                                    }
-                                } ));
+                                                        loanRequestEntity.setStatus("REJECTED");
+                                                    }
+                                                });
+                                            });
+                                } );
+
                  loanRequestRepository.save(loanRequestEntity).subscribe(saved->log.info("SAVED: {}", saved));
                     });
 

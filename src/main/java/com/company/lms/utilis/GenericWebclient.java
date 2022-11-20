@@ -5,6 +5,7 @@ import io.netty.handler.timeout.ReadTimeoutException;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -18,6 +19,7 @@ import java.time.Duration;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /**
  * This class provides a generic template for making POST and GET request
@@ -26,6 +28,12 @@ import java.util.concurrent.TimeUnit;
 public class GenericWebclient {
     private static final long TIMEOUT = 5000;
     private static final int CONNECT_TIMEOUT = 5000;
+    private static Consumer<HttpHeaders> headersConsumer(String token)
+    {
+        return headers->{
+            headers.set("Client-token",token);
+        };
+    }
     /**
      *
      * @param url - String endpoint
@@ -65,8 +73,13 @@ public class GenericWebclient {
      * @param <V>
      * @throws URISyntaxException
      */
-    public  static<V, E extends Exception> Mono<V> getForSingleObjResponse(String url, Class<V> responseClass) throws URISyntaxException {
-        return myWebClient().get()
+    public  static<V, E extends Exception> Mono<V> getForSingleObjResponse(String url, Class<V> responseClass, String... token) throws URISyntaxException {
+        var webClient = myWebClient().get();
+        if (token.length>0)
+        {
+            webClient.headers(headersConsumer(token[0]));
+        }
+        return webClient
                 .uri(new URI(url))
                 .retrieve()
                 .onStatus(HttpStatus::is5xxServerError, error->Mono.error(new RuntimeException("Internal server error occurred.")))
@@ -74,9 +87,14 @@ public class GenericWebclient {
                 .bodyToMono(responseClass);
 
     }
+    public  static<V, E extends Exception> Mono<V> getForSingleObjResponseWithExponentialRetries(String url, Class<V> responseClass, String... token) throws URISyntaxException {
+        var webClient = myWebClient().get();
+        if (token.length>0)
+        {
+            webClient.headers(headersConsumer(token[0]));
+        }
 
-    public  static<V, E extends Exception> Mono<V> getForSingleObjResponseWithExponentialRetries(String url, Class<V> responseClass) throws URISyntaxException {
-        return myWebClient().get()
+        return webClient
                 .uri(new URI(url))
                 .retrieve()
                 .onStatus(HttpStatus::is5xxServerError, error->Mono.error(new RuntimeException("Internal server error occurred.")))

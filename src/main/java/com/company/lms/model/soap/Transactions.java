@@ -279,7 +279,6 @@ public class Transactions {
         return chequeDebitTransactionsNumber;
     }
     @XmlElement(name = "ns2:createdAt")
-//    @XmlJavaTypeAdapter(DateAdapter.class)
     public Date getCreatedAt() {
         return createdAt;
     }

@@ -200,7 +200,7 @@ public class SoapRequestImpl implements SoapRequestService {
                 log.info("Raw: {}",transaction);
                 s = objectWriter.writeValueAsString(transaction);
                 TransactionsMod res = objectMapper.readValue(s, TransactionsMod.class);
-//                res.setCreatedAt(transaction.getCreatedAt().getTime());
+                res.setCreatedAt(transaction.getCreatedAt().getTime());
                 res.setCreatedDate(transaction.getCreatedDate().getTime());
                 res.setLastTransactionDate(transaction.getLastTransactionDate().getTime());
                 res.setUpdatedAt(transaction.getUpdatedAt().getTime());

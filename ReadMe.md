@@ -16,3 +16,10 @@ The loan status can be checked and it occurs in 3:
 https://lms-java-app.herokuapp.com/swagger-doc/webjars/swagger-ui/index.html
 ## Open-API jSON description:
 https://lms-java-app.herokuapp.com/swagger-doc/v3/api-docs
+
+## Tech Stack
+- Language: Java(Reactive Spring)
+- Database: Inmemory H2 database(For testing)
+- Documentation: OpenAPI & Swagger UI
+- CICD: Github Actions + Heroku
+- Version Control: Git

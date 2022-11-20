@@ -31,13 +31,11 @@ import static org.springframework.web.reactive.function.server.RouterFunctions.r
 public class MainRouter {
     private final SoapRequestService soapRequestService;
     private final LoanService loanService;
-//    private final MainHandler mainHandler;
-@Bean
-public RouterFunction<ServerResponse> testRoute(MainHandler mainHandler)
-{
-    System.out.println("Hello");
-    return route(GET("test").and(accept(TEXT_PLAIN)),mainHandler::testHandler);
-}
+    @Bean
+    public RouterFunction<ServerResponse> testRoute(MainHandler mainHandler)
+    {
+        return route(GET("test").and(accept(TEXT_PLAIN)),mainHandler::testHandler);
+    }
 
     @Bean
     @RouterOperations(

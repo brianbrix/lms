@@ -1,5 +1,8 @@
 package com.company.lms.router;
 
+import com.company.lms.model.req.LoanRequest;
+import com.company.lms.model.req.Subscription;
+import com.company.lms.model.res.GenericResponse;
 import com.company.lms.model.soap.TransactionsMod;
 import com.company.lms.services.LoanService;
 import com.company.lms.services.SoapRequestService;
@@ -40,16 +43,42 @@ public class MainRouter {
     @Bean
     @RouterOperations(
             {
-                    @RouterOperation(path = "transactions/{customerNumber}"
+                    @RouterOperation(path = "/transactions/{customerNumber}"
                             , produces = {
-                            MediaType.APPLICATION_JSON_VALUE}, method = RequestMethod.GET, beanClass = SoapRequestService.class, beanMethod = "fetchTransactionHistory",
-                            operation = @Operation(operationId = "fetchTransactionHistory", responses = {
-                                    @ApiResponse(responseCode = "200", description = "successful operation", content = @Content(schema = @Schema(implementation = TransactionsMod.class))),
+                            MediaType.APPLICATION_JSON_VALUE},
+                            method = RequestMethod.GET,
+                            beanClass = SoapRequestService.class,
+                            beanMethod = "fetchTransactionsHistory",
+                            operation = @Operation(operationId = "fetchTransactionsHistory", responses = {
+                                    @ApiResponse(responseCode = "200", description = "Successful operation", content = @Content(schema = @Schema(implementation = TransactionsMod.class))),
                                     @ApiResponse(responseCode = "404", description = "Customer not found")}, parameters = {
-                                    @Parameter(in = ParameterIn.PATH, name = "customerNumber")}
-                                    , requestBody = @RequestBody(content = @Content(schema = @Schema(implementation = TransactionsMod.class))))
+                                    @Parameter(in = ParameterIn.PATH, name = "customerNumber")})
                     ),
-
+                    @RouterOperation(path = "/subscribe", produces = {
+                            MediaType.APPLICATION_JSON_VALUE}, method = RequestMethod.POST, beanClass = MainHandler.class, beanMethod = "subscribe",
+                            operation = @Operation(operationId = "subscribe", responses = {
+                                    @ApiResponse(responseCode = "200", description = "Successful operation", content = @Content(schema = @Schema(implementation = GenericResponse.class))),
+                                    @ApiResponse(responseCode = "400", description = "Invalid request.")}
+                                    , requestBody = @RequestBody(content = @Content(schema = @Schema(implementation = Subscription.class)))
+                            )),
+                    @RouterOperation(path = "/requestLoan", produces = {
+                            MediaType.APPLICATION_JSON_VALUE}, method = RequestMethod.POST, beanClass = MainHandler.class, beanMethod = "requestLoan",
+                            operation = @Operation(operationId = "requestLoan", responses = {
+                                    @ApiResponse(responseCode = "200", description = "Successful operation", content = @Content(schema = @Schema(implementation = GenericResponse.class))),
+                                    @ApiResponse(responseCode = "400", description = "Invalid request.")}
+                                    , requestBody = @RequestBody(content = @Content(schema = @Schema(implementation = LoanRequest.class)))
+                            )),
+                    @RouterOperation(path = "/loans/status/{loanId}"
+                            , produces = {
+                            MediaType.APPLICATION_JSON_VALUE},
+                            method = RequestMethod.GET,
+                            beanClass = LoanService.class,
+                            beanMethod = "requestLoanStatus",
+                            operation = @Operation(operationId = "requestLoanStatus", responses = {
+                                    @ApiResponse(responseCode = "200", description = "Successful operation", content = @Content(schema = @Schema(implementation = GenericResponse.class))),
+                                    @ApiResponse(responseCode = "404", description = "Loan not found")}, parameters = {
+                                    @Parameter(in = ParameterIn.PATH, name = "loanId")})
+                    )
             })
 
     public RouterFunction<ServerResponse> routes(MainHandler mainHandler) {
